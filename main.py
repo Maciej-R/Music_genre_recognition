@@ -25,6 +25,8 @@ s_power = 1  # 1 for energy, 2 for power [output data = FFT(music)^s_power]
 window = sp.signal.windows.chebwin(n_fft, window_attenutaion, True)
 filt = librosa.filters.mel(fs, n_fft, n_mels=n_mels)
 
+testing = 1
+
 
 def spectrogram(data):
     """
@@ -85,6 +87,51 @@ if show_spectra:
     plt.show()
 
 # End show_spectra
+
+# Reading data
+filenames = []
+for g in genres:
+    filenames.append(path.join(example_path, g))
+
+#raw_dataset = tf.data.Dataset.zip((tf.data.TFRecordDataset(filenames, num_parallel_reads=1),
+#                                  tf.data.Dataset.from_tensor_slices(tf.constant(genres))))
+#for element in raw_dataset.as_numpy_iterator():
+#    print(str(element)[0:200])
+filename = path.join(example_path, "all")
+raw_dataset = tf.data.TFRecordDataset(filename, num_parallel_reads=1
+
+
+def dset_parser(raw_record):
+    try:
+        content = tf.io.parse_single_example(raw_record, description)
+    except Exception as e:
+        print(str(e)[0:300] + str(e)[-200:-1])
+    d = content['data'].values.numpy()  # Getting data values
+    l = content['label'].values.numpy()[0].decode("utf-8")  # Getting label
+
+    return (d, l)
+
+
+if testing:
+    for raw_record in raw_dataset.take(1):
+        example = tf.train.Example()
+        example.ParseFromString(raw_record.numpy())
+        description = {
+            "label": tf.io.VarLenFeature(tf.string),
+            "data": tf.io.VarLenFeature(tf.int64)
+        }
+        try:
+            content = tf.io.parse_single_example(raw_record, description)
+        except Exception as e:
+            print(str(e)[0:300] + str(e)[-200:-1])
+        content['data'].values.numpy()  # Getting data values
+        content['label'].values.numpy()[0].decode("utf-8")  # Getting label
+        break
+
+raw_dataset.map(dset_parser)
+
+#https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
+exit(0)
 
 inputs = keras.Input(shape=(784,), name="digits")
 x = keras.layers.Dense(64, activation="relu", name="dense_1")(inputs)

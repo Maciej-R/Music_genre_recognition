@@ -14,9 +14,11 @@ if not path.exists(example_path):
         raise RuntimeError()
 
 for genre in genres:
-    feature = dict()
-    _path = path.join(music_path, genre)
+    examples = list()
+    label = tf.train.Feature(bytes_list=tf.train.BytesList(value=[bytes(genre, "utf-8")]))
+    path_main = path.join(music_path, genre)
     for i in range(1):
+        _path = path_main
         if i < 10:
             filename = "0" * 4 + str(i)
         elif i < 100:
@@ -31,30 +33,19 @@ for genre in genres:
             continue
         assert(fs_read == fs)
 
-        feature[filename] = tf.train.Feature(int64_list=tf.train.Int64List(value=data))
-
-    example = tf.train.Example(features=tf.train.Features(feature=feature))
-    example = example.SerializeToString()
+        feature = tf.train.Feature(int64_list=tf.train.Int64List(value=data))
+        examples.append(tf.train.Example(features=tf.train.Features(feature={"label":label, "data":feature})))
 
     # Write the records to a file.
     try:
-        p = path.join(example_path, genre)
+        p = path.join(example_path, "all")
         if path.exists(p):
             remove(p)
         with tf.io.TFRecordWriter(p) as file_writer:
-            file_writer.write(example)
+            for ex in examples:
+                ex = ex.SerializeToString()
+                file_writer.write(ex)
     except Exception as e:
         print("Error writing file")
-        print(str(e)[0:200])
+        print(str(e)[0:300])
 
-filenames = []
-for g in genres:
-    filenames.append(path.join(example_path, g))
-
-raw_dataset = tf.data.TFRecordDataset(filenames, num_parallel_reads=1)
-for raw_record in raw_dataset.take(1):
-    example = tf.train.Example()
-    example.ParseFromString(raw_record.numpy())
-    s = str(example)
-    print(s[0:100])
-    break
