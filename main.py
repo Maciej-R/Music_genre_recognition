@@ -10,6 +10,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers.experimental import preprocessing
 from settings import *
+from functools import partial
 
 
 # Editable parameters
@@ -122,9 +123,20 @@ if testing:
         content['data'].values.numpy()  # Getting data values
         content['label'].values.numpy()[0].decode("utf-8")  # Getting label
 
-out = [dset_parser(x) for x in raw_dataset]
-#dataset = raw_dataset.map(dset_parser)
-print(out[0])
+features = []
+labels = []
+for r in raw_dataset:
+    rr = dset_parser(r)
+    features.append(rr[0])
+    labels.append(rr[1])
+
+f = tf.constant(features)
+l = tf.constant(labels)
+dataset = tf.data.Dataset.from_tensor_slices((f, l))
+
+for d in dataset:
+    print(d)
+
 #https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
 exit(0)
 
