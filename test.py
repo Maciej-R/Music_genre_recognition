@@ -2,7 +2,6 @@ import tensorflow as tf
 from scipy.io import wavfile
 from settings import *
 from os import path, makedirs, remove
-import numpy as np
 
 
 if not path.exists(example_path):
