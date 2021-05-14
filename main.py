@@ -85,7 +85,7 @@ def make_model(shape):
         tf.keras.layers.Dropout(0.5, name='dropout2'),
         tf.keras.layers.Dense(20, activation='relu', name='dense2'),
         tf.keras.layers.Dropout(0.5, name='dropout3'),
-        tf.keras.layers.Dense(10, name='dense3')
+        tf.keras.layers.Dense(10, name='dense3'),
     ])
 
 
@@ -161,11 +161,15 @@ for r in raw_dataset:
     labels.append(rr[1])
     lengths.append(len(rr[0]))
 
+idxs = dict()
+for i in range(len(genres)):
+    idxs[genres[i]] = i
 # Wyłoży się jak będą różnej długości
 m = min(lengths)
 for i in range(len(features)):
     s = spectrogram(np.array(features[i][0:m]).astype(np.float32))
     features[i] = tf.constant(np.reshape(s, (1, *s.shape)))
+    labels[i] = tf.reshape(tf.constant(tf.one_hot(idxs[labels[i]], len(genres))), (1, len(genres)))
 
 dataset = tf.data.Dataset.from_tensor_slices((features, labels))
 #dataset.map(lambda data, label: (spectrogram(data), label))
