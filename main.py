@@ -27,6 +27,8 @@ window = sp.signal.windows.chebwin(n_fft, window_attenutaion, True)
 filt = librosa.filters.mel(fs, n_fft, n_mels=n_mels)
 
 testing = 0
+BATCH_SIZE = 10
+split = 80  # % of data used for training (rest for validation)
 
 
 def spectrogram(data):
@@ -58,6 +60,33 @@ def dset_parser(raw_record):
     l = content['label'].values.numpy()[0].decode("utf-8")  # Getting label
 
     return (d, l)
+
+
+def make_model(shape):
+    return tf.keras.Sequential([
+        tf.keras.layers.Conv1D(filters=128,
+                               kernel_size=3,
+                               activation='relu',
+                               input_shape=shape,
+                               name='conv1'),
+
+        tf.keras.layers.MaxPooling1D(name='max1'),
+
+        tf.keras.layers.Conv1D(filters=64,
+                               kernel_size=3,
+                               activation='relu',
+                               name='conv2'),
+
+        tf.keras.layers.MaxPooling1D(name='max2'),
+
+        tf.keras.layers.Flatten(name='flatten'),
+
+        tf.keras.layers.Dense(100, activation='relu', name='dense1'),
+        tf.keras.layers.Dropout(0.5, name='dropout2'),
+        tf.keras.layers.Dense(20, activation='relu', name='dense2'),
+        tf.keras.layers.Dropout(0.5, name='dropout3'),
+        tf.keras.layers.Dense(10, name='dense3')
+    ])
 
 
 # Displaying spectrograms with requested parameters of random song from each category from GTZAN
@@ -125,58 +154,86 @@ if testing:
 
 features = []
 labels = []
+lengths = []
 for r in raw_dataset:
     rr = dset_parser(r)
     features.append(rr[0])
     labels.append(rr[1])
+    lengths.append(len(rr[0]))
 
-f = tf.constant(features)
-l = tf.constant(labels)
-dataset = tf.data.Dataset.from_tensor_slices((f, l))
+# Wyłoży się jak będą różnej długości
+m = min(lengths)
+for i in range(len(features)):
+    s = spectrogram(np.array(features[i][0:m]).astype(np.float32))
+    features[i] = tf.constant(np.reshape(s, (1, *s.shape)))
 
-for d in dataset:
-    print(d)
+dataset = tf.data.Dataset.from_tensor_slices((features, labels))
+#dataset.map(lambda data, label: (spectrogram(data), label))
+#for d in dataset:
+#    print(d)
+dataset.shuffle(min(len(dataset), 4000))
+n_split = np.ceil(len(dataset) * split / 100)
+training_dset = dataset.take(n_split)
+validation_dset = dataset.skip(n_split)
+
+_shape = n_mels, int(np.ceil(m / hop_length + 1))
+training_dset.batch(BATCH_SIZE)
+validation_dset.batch(BATCH_SIZE)
+
+initial_learning_rate = 0.01
+lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate, decay_steps=20, decay_rate=0.96, staircase=True
+)
+
+checkpoint_cb = tf.keras.callbacks.ModelCheckpoint(
+    "genres.h5", save_best_only=True
+)
+
+early_stopping_cb = tf.keras.callbacks.EarlyStopping(
+    patience=10, restore_best_weights=True
+)
+
+model = make_model(_shape)
+
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
+    loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+    metrics=['accuracy']
+)
+
+history = model.fit(
+    training_dset,
+    epochs=2,
+    validation_data=validation_dset,
+    callbacks=[checkpoint_cb, early_stopping_cb],
+)
 
 #https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
 exit(0)
 
-inputs = keras.Input(shape=(784,), name="digits")
-x = keras.layers.Dense(64, activation="relu", name="dense_1")(inputs)
-x = keras.layers.Dense(64, activation="relu", name="dense_2")(x)
-outputs = keras.layers.Dense(10, activation="softmax", name="predictions")(x)
-
-model = keras.Model(inputs=inputs, outputs=outputs)
-
-history = model.fit(
-    x_train,
-    y_train,
-    batch_size=64,
-    epochs=2,
-    # We pass some validation for
-    # monitoring validation loss and metrics
-    # at the end of each epoch
-    validation_data=(x_val, y_val),
-)
-
-results = model.evaluate(x_test, y_test, batch_size=128)
+with strategy.scope():
+  # create the model
 
 
-# Batch size
-BATCH_SIZE = 64
+  #compile
+  model.compile(optimizer='adam',
+                loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+                metrics=['accuracy'])
 
-# Buffer size to shuffle the dataset
-# (TF data is designed to work with possibly infinite sequences,
-# so it doesn't attempt to shuffle the entire sequence in memory. Instead,
-# it maintains a buffer in which it shuffles elements).
-BUFFER_SIZE = 10000
+  model.summary()
 
+ # train the model
+logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
+EPOCHS = 100
+raw_audio_history = model.fit(training_dataset_1d, steps_per_epoch=steps_per_epoch,
+                    validation_data=validation_dataset_1d, epochs=EPOCHS,
+                    callbacks=tensorboard_callback)
 
+# evaluate on the test data
+model.evaluate(testing_dataset_1d)
 
-dataset = (
-    dataset
-    .shuffle(BUFFER_SIZE)
-    .batch(BATCH_SIZE, drop_remainder=True)
-    .prefetch(tf.data.experimental.AUTOTUNE))
+#############################################################
 
 self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
 self.gru = tf.keras.layers.GRU(rnn_units,
