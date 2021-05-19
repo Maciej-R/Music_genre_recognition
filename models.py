@@ -1,4 +1,5 @@
 import tensorflow as tf
+from math import floor
 
 
 def make_model(shape, name):
@@ -25,5 +26,22 @@ def make_model(shape, name):
             tf.keras.layers.Dropout(0.5, name='dropout2'),
             tf.keras.layers.Dense(20, activation='relu', name='dense2'),
             tf.keras.layers.Dropout(0.5, name='dropout3'),
+            tf.keras.layers.Dense(10, name='dense3'),
+        ])
+
+    if (name == "recurrent1"):  # Szybciej dzieci będziecie mieć niż wytrenujecie to z tym embeddingiem
+        # Three parameters below are modifiable
+        strides = 2
+        p_size = 2
+        e_len = 10
+        out = int((shape[1] - p_size) / strides) + 1
+        reshape = out * shape[0]
+        return tf.keras.Sequential([
+            tf.keras.layers.Reshape((*shape, 1)),
+            tf.keras.layers.MaxPooling2D((1, p_size), (1, strides), input_shape=shape),
+            tf.keras.layers.Reshape((1, reshape)),
+            tf.keras.layers.Embedding(65536, e_len),
+            tf.keras.layers.Reshape((shape[0], int(reshape * e_len / shape[0]))),
+            tf.keras.layers.Bidirectional(tf.keras.layers.GRU(256)),
             tf.keras.layers.Dense(10, name='dense3'),
         ])
