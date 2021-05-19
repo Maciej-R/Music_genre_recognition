@@ -56,7 +56,7 @@ early_stopping_cb = tf.keras.callbacks.EarlyStopping(
     patience=10, restore_best_weights=True
 )
 
-model = make_model(_shape)
+model = make_model(_shape, "test")
 
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
