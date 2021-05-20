@@ -14,3 +14,5 @@ s_power = 1  # 1 for energy, 2 for power [output data = FFT(music)^s_power]
 data_path = "D:\\Data\\archive\\Data"
 music_path = "D:\\Data\\archive\\Data\\genres_original"
 example_path = "D:\\Data\\archive\\Data\\examples"
+
+BATCH_SIZE = 10

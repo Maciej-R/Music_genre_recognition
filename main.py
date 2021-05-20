@@ -7,9 +7,8 @@ from settings import *
 from data_processing import *
 from models import make_model
 
-model = "recurrent1"
+model = "BBNN"
 
-BATCH_SIZE = 10
 split = 80  # % of data used for training (rest for validation)
 filename = path.join(example_path, "all")
 raw_dataset = tf.data.TFRecordDataset(filename, num_parallel_reads=1)
