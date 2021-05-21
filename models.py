@@ -58,8 +58,15 @@ def make_model(shape, name):
 
         shape = int(shape[0]/4), shape[1]
         inception_a = inception(shape, kernel_size, mp)
+        connector1 = tf.keras.layers.Concatenate()([inception_a, mp])
 
-        out = tf.keras.layers.BatchNormalization()(inception_a)
+        inception_b = inception(shape, kernel_size, connector1)
+        connector2 = tf.keras.layers.Concatenate()([connector1, inception_b])
+
+        inception_c = inception(shape, kernel_size, connector2)
+        connector3 = tf.keras.layers.Concatenate()([connector2, inception_c])
+
+        out = tf.keras.layers.BatchNormalization()(connector3)
         out = tf.keras.layers.Conv2D(filters=1, kernel_size=kernel_size, strides=(1,1))(out)
         out = tf.keras.layers.AveragePooling2D(pool_size=(2,2), strides=(2,2))(out)
         out = tf.keras.layers.BatchNormalization()(out)
