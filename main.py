@@ -71,7 +71,7 @@ model.compile(
 
 history = model.fit(
     training_dset,
-    epochs=2,
+    epochs=20,
     validation_data=validation_dset,
     callbacks=[checkpoint_cb, early_stopping_cb],
 )

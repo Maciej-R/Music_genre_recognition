@@ -11,8 +11,8 @@ use_log_scale = 0  # Spectrogram in dB if 1 [X = 10*log10(X)], default should be
 use_mel_scale = 1  # Converting spectrogram to mel scale, default should be 1
 s_power = 1  # 1 for energy, 2 for power [output data = FFT(music)^s_power]
 # Paths
-data_path = "D:\\Data\\archive\\Data"
-music_path = "D:\\Data\\archive\\Data\\genres_original"
-example_path = "D:\\Data\\archive\\Data\\examples"
+data_path = "C:\\Users\\JaroslawZelechowski\\Documents\\Music_genre_recognition\\Data"
+music_path = data_path + "\\genres_original"
+example_path = data_path + "\\examples"
 
 BATCH_SIZE = 10
