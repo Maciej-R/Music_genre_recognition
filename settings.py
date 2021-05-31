@@ -15,4 +15,8 @@ data_path = "C:\\Users\\JaroslawZelechowski\\Documents\\Music_genre_recognition\
 music_path = data_path + "\\genres_original"
 example_path = data_path + "\\examples"
 
+# Models
+save_model = 1
+model_path = data_path + "\\models\\"
+
 BATCH_SIZE = 10
