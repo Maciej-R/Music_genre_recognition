@@ -44,7 +44,7 @@ n_split = np.ceil(len(dataset) * split / 100)
 training_dset = dataset.take(n_split)
 validation_dset = dataset.skip(n_split)
 
-_shape = n_mels, int(np.ceil(m / hop_length + 1))
+_shape = features[0].shape[1:]
 training_dset.batch(BATCH_SIZE)
 validation_dset.batch(BATCH_SIZE)
 
@@ -77,4 +77,6 @@ history = model.fit(
 )
 
 #https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
+
+print('po szklanie i na rusztowanie')
 exit(0)
