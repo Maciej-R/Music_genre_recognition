@@ -7,7 +7,7 @@ from settings import *
 from data_processing import *
 from models import make_model
 
-model = "BBNN"
+model_name = "BBNN"
 
 split = 80  # % of data used for training (rest for validation)
 filename = path.join(example_path, "all")
@@ -28,7 +28,7 @@ for i in range(len(genres)):
 # Wyłoży się jak będą różnej długości
 m = min(lengths)
 for i in range(len(features)):
-    if model == "recurrent1":  # In order to limit number of possible values for embedding
+    if model_name == "recurrent1":  # In order to limit number of possible values for embedding
         s = spectrogram(np.array(features[i][0:m]).astype(np.float32))
         s = s / (2**5)
         s = s.astype(np.uint16)
@@ -61,7 +61,11 @@ early_stopping_cb = tf.keras.callbacks.EarlyStopping(
     patience=10, restore_best_weights=True
 )
 
-model = make_model(_shape, model)
+model = make_model(_shape, model_name)
+
+model.summary()
+#tf.keras.utils.plot_model(model, model_name+".png")  # Requires graphviz installed (in system)
+#exit(0)
 
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
@@ -77,6 +81,4 @@ history = model.fit(
 )
 
 #https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
-
-print('po szklanie i na rusztowanie')
 exit(0)
