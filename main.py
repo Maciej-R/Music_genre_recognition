@@ -66,15 +66,19 @@ model = make_model(_shape, model)
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
     loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
-    metrics=['accuracy']
+    metrics=['accuracy'],
+    run_eagerly=True
 )
 
 history = model.fit(
     training_dset,
-    epochs=20,
+    epochs=2,
     validation_data=validation_dset,
     callbacks=[checkpoint_cb, early_stopping_cb],
 )
+
+model.summary()
+keras.utils.plot_model(model, show_shapes=True)
 
 #https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
 

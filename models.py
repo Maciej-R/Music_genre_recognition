@@ -27,7 +27,8 @@ def make_model(shape, name):
             tf.keras.layers.Dense(10),
         ])
 
-    if (name == "recurrent1"):  # Szybciej dzieci będziecie mieć niż wytrenujecie to z tym embeddingiem
+    if (name == "recurrent1"):  
+        # Szybciej dzieci będziecie mieć niż wytrenujecie to z tym embeddingiem
         # Three parameters below are modifiable
         strides = 2
         p_size = 2
@@ -67,7 +68,7 @@ def make_model(shape, name):
         connector3 = tf.keras.layers.Concatenate()([connector2, inception_c])
 
         out = tf.keras.layers.BatchNormalization()(connector3)
-        out = tf.keras.layers.Conv2D(filters=1, kernel_size=kernel_size, strides=(1,1))(out)
+        out = tf.keras.layers.Conv2D(filters=33, kernel_size=kernel_size, strides=(1,1))(out)
         out = tf.keras.layers.AveragePooling2D(pool_size=(2,2), strides=(2,2))(out)
         out = tf.keras.layers.BatchNormalization()(out)
         out = tf.keras.layers.GlobalAveragePooling2D()(out)

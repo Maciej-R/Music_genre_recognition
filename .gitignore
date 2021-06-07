@@ -4,4 +4,4 @@ venv/*
 venv
 genres.h5
 .vscode
-__pychache__
+__pycache__
