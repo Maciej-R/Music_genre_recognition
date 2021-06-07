@@ -3,3 +3,4 @@ librosa~=0.8.0
 numpy~=1.19.2
 matplotlib~=3.4.1
 tensorflow~=2.5.0rc2
+pydotplus~=2.0.2

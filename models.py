@@ -27,8 +27,7 @@ def make_model(shape, name):
             tf.keras.layers.Dense(10),
         ])
 
-    if (name == "recurrent1"):  
-        # Szybciej dzieci będziecie mieć niż wytrenujecie to z tym embeddingiem
+    if (name == "recurrent1"):
         # Three parameters below are modifiable
         strides = 2
         p_size = 2
@@ -83,20 +82,20 @@ def inception(shape, kernel_size, _input):
     input = _input
 
     _1 = tf.keras.layers.BatchNormalization()(input)
-    _1 = tf.keras.layers.Conv2D(filters=1, kernel_size=kernel_size, strides=(1, 1), padding="same")(_1)
+    _1 = tf.keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding="same")(_1)
 
     _2 = tf.keras.layers.BatchNormalization()(input)
-    _2 = tf.keras.layers.Conv2D(filters=1, kernel_size=kernel_size, strides=(1, 1), padding="same")(_2)
+    _2 = tf.keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding="same")(_2)
     _2 = tf.keras.layers.BatchNormalization()(_2)
-    _2 = tf.keras.layers.Conv2D(filters=3, kernel_size=kernel_size, strides=(1, 1), padding="same")(_2)
+    _2 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding="same")(_2)
 
     _3 = tf.keras.layers.BatchNormalization()(input)
-    _3 = tf.keras.layers.Conv2D(filters=1, kernel_size=kernel_size, strides=(1, 1), padding="same")(_3)
+    _3 = tf.keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding="same")(_3)
     _3 = tf.keras.layers.BatchNormalization()(_3)
-    _3 = tf.keras.layers.Conv2D(filters=5, kernel_size=kernel_size, strides=(1, 1), padding="same")(_3)
+    _3 = tf.keras.layers.Conv2D(filters=32, kernel_size=(5, 5), strides=(1, 1), padding="same")(_3)
 
     _4 = tf.keras.layers.MaxPooling2D(pool_size=5, strides=(1, 1))
     _4 = tf.keras.layers.BatchNormalization()(input)
-    _4 = tf.keras.layers.Conv2D(filters=1, kernel_size=kernel_size, strides=(1, 1), padding="same")(_4)
+    _4 = tf.keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding="same")(_4)
 
     return tf.keras.layers.Concatenate(axis=3)([_1, _2, _3, _4])
