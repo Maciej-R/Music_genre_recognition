@@ -7,7 +7,7 @@ from settings import *
 from data_processing import *
 from models import make_model
 
-model_name = "BBNN"
+model_name = "recurrent2"
 
 split = 80  # % of data used for training (rest for validation)
 filename = path.join(example_path, "all")
@@ -33,13 +33,16 @@ for i in range(len(features)):
         s = s / (2**5)
         s = s.astype(np.uint16)
     else:
-        s = spectrogram(np.array(features[i][0:m]).astype(np.float32))
+        if transpose:
+            s = np.transpose(spectrogram(np.array(features[i][0:m]).astype(np.float32)))
+        else:
+            s = spectrogram(np.array(features[i][0:m]).astype(np.float32))
     features[i] = tf.constant(np.reshape(s, (1, *s.shape)))
     labels[i] = tf.reshape(tf.constant(tf.one_hot(idxs[labels[i]], len(genres))), (1, len(genres)))
 
 dataset = tf.data.Dataset.from_tensor_slices((features, labels))
 #dataset.map(lambda data, label: (spectrogram(data), label))  # Looks like shallow copy issues
-dataset.shuffle(min(len(dataset), 4000))
+dataset = dataset.shuffle(min(len(dataset), 4000))
 n_split = np.ceil(len(dataset) * split / 100)
 training_dset = dataset.take(n_split)
 validation_dset = dataset.skip(n_split)
@@ -63,7 +66,7 @@ early_stopping_cb = tf.keras.callbacks.EarlyStopping(
 
 model = make_model(_shape, model_name)
 
-model.summary()
+#model.summary()
 #tf.keras.utils.plot_model(model, model_name+".png")  # Requires graphviz installed (in system)
 #exit(0)
 
@@ -76,13 +79,25 @@ model.compile(
 
 history = model.fit(
     training_dset,
-    epochs=2,
+    epochs=1,
     validation_data=validation_dset,
     callbacks=[checkpoint_cb, early_stopping_cb],
 )
 
-model.summary()
-keras.utils.plot_model(model, show_shapes=True)
+labels_original = np.concatenate([y for x, y in validation_dset], axis=0)
+labels_numeric = list()
+for l in labels_original:
+    idx = np.where(l == 1)[0][0]
+    labels_numeric.append(idx)
+predictions = model.predict(np.concatenate([x for x, y in validation_dset], axis=0))
+predictions_numeric = list()
+for p in predictions:
+    idx = np.where(p == max(p))[0][0]
+    predictions_numeric.append(idx)
+
+cm = tf.math.confusion_matrix(labels_numeric, predictions_numeric)
+print(cm)
+print(genres)
 
 #https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
 exit(0)

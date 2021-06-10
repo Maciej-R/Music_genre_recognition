@@ -21,7 +21,7 @@ try:
             examples = list()
             label = tf.train.Feature(bytes_list=tf.train.BytesList(value=[bytes(genre, "utf-8")]))
             path_main = path.join(music_path, genre)
-            for i in range(2):
+            for i in range(20):
                 _path = path_main
                 if i < 10:
                     filename = "0" * 4 + str(i)
@@ -37,12 +37,12 @@ try:
                     continue
                 assert(fs_read == fs)
 
-                feature = tf.train.Feature(int64_list=tf.train.Int64List(value=data))
+                feature = tf.train.Feature(int64_list=tf.train.Int64List(value=data))  # Long
                 examples.append(tf.train.Example(features=tf.train.Features(feature={"label":label, "data":feature})))
 
             # Write the records to a file.
             for ex in examples:
-                ex = ex.SerializeToString()
+                ex = ex.SerializeToString()  # Super long
                 file_writer.write(ex)
 
 except Exception as e:
