@@ -7,7 +7,7 @@ from settings import *
 from data_processing import *
 from models import make_model
 
-model_name = "recurrent2"
+model_name = "BBNN"
 
 split = 80  # % of data used for training (rest for validation)
 filename = path.join(example_path, "all")

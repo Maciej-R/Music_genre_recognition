@@ -72,23 +72,25 @@ def make_model(shape, name):
     if (name == "PRCNN"):
 
         input = tf.keras.layers.Input(shape)
-        r = tf.keras.layers.Reshape((*shape, 1))(input)
-        r = tf.keras.layers.MaxPooling2D((1, 2), (1, 2))(r)
-        r = tf.keras.layers.Reshape((shape[0], int(shape[1] / 2)))(r)
+        input = tf.keras.layers.Reshape((*shape, 1))(input)
+
+        r = tf.keras.layers.MaxPooling2D((1, 2), (1, 2))(input)
+        r = tf.keras.layers.Reshape((shape[0], int(shape[1] / 2)))(r)  # MaxPooling drops half
         r = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(256))(r)
 
-        c = tf.keras.layers.Conv2D(16, 3)(input)
+        n_filters = 32
+        c = tf.keras.layers.Conv2D(n_filters, 3)(input)
         c = tf.keras.layers.MaxPooling2D((2,2), (2,2))(c)
-        c = tf.keras.layers.Conv2D(32, 3)(c)
+        c = tf.keras.layers.Conv2D(n_filters*2, 3)(c)
         c = tf.keras.layers.MaxPooling2D((2,2), (2,2))(c)
-        c = tf.keras.layers.Conv2D(64, 3)(c)
+        c = tf.keras.layers.Conv2D(n_filters*4, 3)(c)
         c = tf.keras.layers.MaxPooling2D((2, 2), (2, 2))(c)
-        c = tf.keras.layers.Conv1D(128, 3)(c)
+        c = tf.keras.layers.Conv2D(n_filters*8, 3)(c)
         c = tf.keras.layers.MaxPooling2D((4, 4), (4, 4))(c)
-        c = tf.keras.layers.Conv1D(64, 3)(c)
+        c = tf.keras.layers.Conv2D(n_filters*4, 3)(c)
         c = tf.keras.layers.MaxPooling2D((4, 4), (4, 4))(c)
 
-        out = tf.keras.layers.Concatenate()[r, c]
+        out = tf.keras.layers.Concatenate()([r, c])
         out = tf.keras.layers.Dense(10, activation="softmax")(out)
 
         return tf.keras.models.Model(inputs=input, outputs=out)
@@ -131,21 +133,21 @@ def inception(shape, kernel_size, _input):
 
     input = _input
 
-    _1 = tf.keras.layers.BatchNormalization()(input)
-    _1 = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1), padding="same")(_1)
+    #_1 = tf.keras.layers.BatchNormalization()(input)
+    _1 = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1), padding="same")(input)
 
-    _2 = tf.keras.layers.BatchNormalization()(input)
-    _2 = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1), padding="same")(_2)
-    _2 = tf.keras.layers.BatchNormalization()(_2)
+    #_2 = tf.keras.layers.BatchNormalization()(input)
+    _2 = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1), padding="same")(input)
+    #_2 = tf.keras.layers.BatchNormalization()(_2)
     _2 = tf.keras.layers.Conv2D(filters=32, kernel_size=3, strides=(1, 1), padding="same")(_2)
 
-    _3 = tf.keras.layers.BatchNormalization()(input)
-    _3 = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1), padding="same")(_3)
-    _3 = tf.keras.layers.BatchNormalization()(_3)
+    #_3 = tf.keras.layers.BatchNormalization()(input)
+    _3 = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1), padding="same")(input)
+    #_3 = tf.keras.layers.BatchNormalization()(_3)
     _3 = tf.keras.layers.Conv2D(filters=32, kernel_size=5, strides=(1, 1), padding="same")(_3)
 
     _4 = tf.keras.layers.MaxPooling2D(pool_size=5, strides=(1, 1), padding="same")(input)
-    _4 = tf.keras.layers.BatchNormalization()(_4)
+    #_4 = tf.keras.layers.BatchNormalization()(_4)
     _4 = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1), padding="same")(_4)
 
     return tf.keras.layers.Concatenate(axis=-1)([_1, _2, _3, _4])
