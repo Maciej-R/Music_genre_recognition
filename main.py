@@ -7,7 +7,16 @@ from settings import *
 from data_processing import *
 from models import make_model
 
-model_name = "BBNN"
+model_name = "convoulutional1"
+
+MODELS = ["test", "recurrent1", "recurrent2", "convoulutional1", "conv_zporadnika", "PRCNN", "BBNN"]
+EPOCHS = 20
+print('Wybierz model:')
+for i in range(len(MODELS)):
+    print(f'{i+1}. {MODELS[i]}')
+model_name = MODELS[int(input())-1]
+
+
 
 split = 80  # % of data used for training (rest for validation)
 filename = path.join(example_path, "all")
@@ -57,7 +66,7 @@ lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
 )
 
 checkpoint_cb = tf.keras.callbacks.ModelCheckpoint(
-    "genres.h5", save_best_only=True
+    f"{model_name}.h5", save_best_only=True
 )
 
 early_stopping_cb = tf.keras.callbacks.EarlyStopping(
@@ -79,7 +88,7 @@ model.compile(
 
 history = model.fit(
     training_dset,
-    epochs=1,
+    epochs=EPOCHS,
     validation_data=validation_dset,
     callbacks=[checkpoint_cb, early_stopping_cb],
 )
@@ -89,15 +98,28 @@ labels_numeric = list()
 for l in labels_original:
     idx = np.where(l == 1)[0][0]
     labels_numeric.append(idx)
-predictions = model.predict(np.concatenate([x for x, y in validation_dset], axis=0))
+# predictions = model.predict(np.concatenate([x for x, y in validation_dset], axis=0))
+predictions = model.evaluate(np.concatenate([x for x, y in validation_dset], axis=0))
 predictions_numeric = list()
 for p in predictions:
     idx = np.where(p == max(p))[0][0]
+    idy = np.argmax(p)
     predictions_numeric.append(idx)
+    #print(idx, idy, p)
+print(labels_numeric)
+print(predictions_numeric)
+counter = 0
+for i in range(len(labels_numeric)):
+    if labels_numeric[i] == predictions_numeric[i]:
+        counter +=1
+print(counter/len(labels_numeric))
+
 
 cm = tf.math.confusion_matrix(labels_numeric, predictions_numeric)
 print(cm)
 print(genres)
+with open(f'confusion_matrixes/{model_name}_{counter/len(labels_numeric)}', 'w') as f:
+    f.write(str(cm))
 
 #https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
 exit(0)

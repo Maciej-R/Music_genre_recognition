@@ -13,7 +13,7 @@ if not path.exists(example_path):
         raise RuntimeError()
 
 try:
-    p = path.join(example_path, "all")
+    p = path.join(example_path, "all1")
     if path.exists(p):
         remove(p)
     with tf.io.TFRecordWriter(p) as file_writer:
@@ -21,7 +21,7 @@ try:
             examples = list()
             label = tf.train.Feature(bytes_list=tf.train.BytesList(value=[bytes(genre, "utf-8")]))
             path_main = path.join(music_path, genre)
-            for i in range(20):
+            for i in range(100):
                 _path = path_main
                 if i < 10:
                     filename = "0" * 4 + str(i)

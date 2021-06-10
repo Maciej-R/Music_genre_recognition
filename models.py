@@ -57,6 +57,7 @@ def make_model(shape, name):
 
     if (name == "convoulutional1"):
         return tf.keras.Sequential([
+            tf.keras.layers.Reshape((*shape, 1)),
             tf.keras.layers.Conv2D(16, 3),
             tf.keras.layers.MaxPooling2D((2,2), (2,2)),
             tf.keras.layers.Conv2D(32, 3),
@@ -67,8 +68,47 @@ def make_model(shape, name):
             tf.keras.layers.MaxPooling2D((4, 4), (4, 4)),
             tf.keras.layers.Conv1D(64, 3),
             tf.keras.layers.MaxPooling2D((4, 4), (4, 4)),
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(10)
         ])
 
+    if (name =="conv_zporadnika"):
+        X_input = tf.keras.layers.Input(shape)
+
+        X = tf.keras.layers.Conv2D(8,kernel_size=(3,3),strides=(1,1))(X_input)
+        X = tf.keras.layers.BatchNormalization(axis=3)(X)
+        X = tf.keras.layers.Activation('relu')(X)
+        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+        
+        X = tf.keras.layers.Conv2D(16,kernel_size=(3,3),strides = (1,1))(X)
+        X = tf.keras.layers.BatchNormalization(axis=3)(X)
+        X = tf.keras.layers.Activation('relu')(X)
+        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+        
+        X = tf.keras.layers.Conv2D(32,kernel_size=(3,3),strides = (1,1))(X)
+        X = tf.keras.layers.BatchNormalization(axis=3)(X)
+        X = tf.keras.layers.Activation('relu')(X)
+        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+
+        X = tf.keras.layers.Conv2D(64,kernel_size=(3,3),strides=(1,1))(X)
+        X = tf.keras.layers.BatchNormalization(axis=-1)(X)
+        X = tf.keras.layers.Activation('relu')(X)
+        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+        
+        X = tf.keras.layers.Conv2D(128,kernel_size=(3,3),strides=(1,1))(X)
+        X = tf.keras.layers.BatchNormalization(axis=-1)(X)
+        X = tf.keras.layers.Activation('relu')(X)
+        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+
+        
+        X = tf.keras.layers.Flatten()(X)
+        
+        X = tf.keras.layers.Dropout(rate=0.3)
+
+        X = tf.keras.layers.Dense(10, activation='softmax', name='fc' + str(10))(X)
+
+        return tf.keras.layers.Model(inputs=X_input,outputs=X,name='GenreModel')
+    
     if (name == "PRCNN"):
 
         input = tf.keras.layers.Input(shape)
