@@ -108,30 +108,32 @@ def make_model(shape, name):
         X = tf.keras.layers.Dense(10, activation='softmax', name='fc' + str(10))(X)
 
         return tf.keras.layers.Model(inputs=X_input,outputs=X,name='GenreModel')
-    
+
     if (name == "PRCNN"):
-
         input = tf.keras.layers.Input(shape)
-        input = tf.keras.layers.Reshape((*shape, 1))(input)
+        inn = tf.keras.layers.Reshape((*shape, 1))(input)
 
-        r = tf.keras.layers.MaxPooling2D((1, 2), (1, 2))(input)
+        r = tf.keras.layers.MaxPooling2D((1, 2), (1, 2))(inn)
         r = tf.keras.layers.Reshape((shape[0], int(shape[1] / 2)))(r)  # MaxPooling drops half
         r = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(256))(r)
+        r = tf.keras.layers.Dense(5, activation="softmax")(r)
 
-        n_filters = 32
-        c = tf.keras.layers.Conv2D(n_filters, 3)(input)
-        c = tf.keras.layers.MaxPooling2D((2,2), (2,2))(c)
-        c = tf.keras.layers.Conv2D(n_filters*2, 3)(c)
-        c = tf.keras.layers.MaxPooling2D((2,2), (2,2))(c)
-        c = tf.keras.layers.Conv2D(n_filters*4, 3)(c)
+        n_filters = 16
+        c = tf.keras.layers.Conv2D(n_filters, 3)(inn)
         c = tf.keras.layers.MaxPooling2D((2, 2), (2, 2))(c)
-        c = tf.keras.layers.Conv2D(n_filters*8, 3)(c)
+        c = tf.keras.layers.Conv2D(n_filters * 2, 3)(c)
+        c = tf.keras.layers.MaxPooling2D((2, 2), (2, 2))(c)
+        c = tf.keras.layers.Conv2D(n_filters * 4, 3)(c)
+        c = tf.keras.layers.MaxPooling2D((2, 2), (2, 2))(c)
+        c = tf.keras.layers.Conv2D(n_filters * 8, 3)(c)
         c = tf.keras.layers.MaxPooling2D((4, 4), (4, 4))(c)
-        c = tf.keras.layers.Conv2D(n_filters*4, 3)(c)
+        c = tf.keras.layers.Conv2D(n_filters * 4, 3)(c)
         c = tf.keras.layers.MaxPooling2D((4, 4), (4, 4))(c)
+        c = tf.keras.layers.Flatten()(c)
+        c = tf.keras.layers.Dense(5, activation="softmax")(c)
 
         out = tf.keras.layers.Concatenate()([r, c])
-        out = tf.keras.layers.Dense(10, activation="softmax")(out)
+        # out = tf.keras.layers.Dense(10, activation="softmax")(out)
 
         return tf.keras.models.Model(inputs=input, outputs=out)
 
