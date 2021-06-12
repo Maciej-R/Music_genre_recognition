@@ -25,6 +25,7 @@ def make_model(shape, name):
             tf.keras.layers.Dense(20, activation='relu'),
             tf.keras.layers.Dropout(0.5),
             tf.keras.layers.Dense(10),
+            tf.keras.layers.Softmax()
         ])
 
     if (name == "recurrent1"):
@@ -42,6 +43,7 @@ def make_model(shape, name):
             tf.keras.layers.Reshape((shape[0], int(reshape * e_len / shape[0]))),
             tf.keras.layers.Bidirectional(tf.keras.layers.GRU(256)),
             tf.keras.layers.Dense(10),
+            tf.keras.layers.Softmax()
         ])
 
     if (name == "recurrent2"):
@@ -53,6 +55,7 @@ def make_model(shape, name):
             tf.keras.layers.Reshape((shape[0], int(shape[1]/2))),
             tf.keras.layers.Bidirectional(tf.keras.layers.GRU(256)),
             tf.keras.layers.Dense(10),
+            tf.keras.layers.Softmax()
         ])
 
     if (name == "convoulutional1"):
@@ -133,7 +136,8 @@ def make_model(shape, name):
         #c = tf.keras.layers.Dense(5, activation="softmax")(c)
 
         out = tf.keras.layers.Concatenate(axis=1)([r, c])
-        out = tf.keras.layers.Dense(10)(out)
+        out = tf.keras.layers.Dense(10, activation=None)(out)
+        out = tf.keras.layers.Softmax()(out)
 
         return tf.keras.models.Model(inputs=input, outputs=out)
 

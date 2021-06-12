@@ -10,10 +10,9 @@ from models import make_model
 from data_reading import read
 
 
-#putenv("TF_CPP_MIN_LOG_LEVEL", "2")
 model_name = "recurrent2"
 
-EPOCHS = 20
+EPOCHS = 10
 # MODELS = ["test", "recurrent1", "recurrent2", "convoulutional1", "conv_zporadnika", "PRCNN", "BBNN", "BBNN_simplified"]
 # print('Wybierz model:')
 # for i in range(len(MODELS)):
@@ -35,38 +34,43 @@ validation_dset = validation_dset.take(n_split)
 training_dset.batch(BATCH_SIZE)
 validation_dset.batch(BATCH_SIZE)
 
-initial_learning_rate = 0.01
-lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate, decay_steps=20, decay_rate=0.96, staircase=True
-)
+learn = True
+if learn:
 
-checkpoint_cb = tf.keras.callbacks.ModelCheckpoint(
-    f"checkpoints/{model_name}.h5", save_best_only=True
-)
+    initial_learning_rate = 0.01
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate, decay_steps=20, decay_rate=0.96, staircase=True
+    )
 
-early_stopping_cb = tf.keras.callbacks.EarlyStopping(
-    patience=10, restore_best_weights=True
-)
+    checkpoint_cb = tf.keras.callbacks.ModelCheckpoint(
+        f"checkpoints/{model_name}.h5", save_best_only=True, monitor='val_accuracy'
+    )
 
-model = make_model(_shape, model_name)
+    early_stopping_cb = tf.keras.callbacks.EarlyStopping(
+        patience=10, restore_best_weights=True, monitor='val_accuracy'
+    )
 
-#model.summary()
-#tf.keras.utils.plot_model(model, model_name+".png")  # Requires graphviz installed (in system)
-#exit(0)
+    model = make_model(_shape, model_name)
 
-model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
-    loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
-    metrics=['accuracy'],
-    run_eagerly=True
-)
+    #model.summary()
+    #tf.keras.utils.plot_model(model, model_name+".png")  # Requires graphviz installed (in system)
 
-history = model.fit(
-    training_dset,
-    epochs=EPOCHS,
-    validation_data=validation_dset,
-    callbacks=[checkpoint_cb, early_stopping_cb],
-)
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=False),
+        metrics=[tf.keras.metrics.CategoricalAccuracy(), 'accuracy'],
+        run_eagerly=True
+    )
+
+    history = model.fit(
+        training_dset,
+        epochs=EPOCHS,
+        validation_data=validation_dset,
+        callbacks=[checkpoint_cb, early_stopping_cb],
+    )
+
+else:
+    model = tf.keras.models.load_model(f"checkpoints/{model_name}.h5")
 
 labels_original = np.concatenate([y for x, y in test_dset], axis=0)
 labels_numeric = list()
@@ -74,7 +78,8 @@ for l in labels_original:
     idx = np.where(l == 1)[0][0]
     labels_numeric.append(idx)
 predictions = model.predict(np.concatenate([x for x, y in test_dset], axis=0))
-print(model.evaluate(np.concatenate([x for x, y in test_dset], axis=0)))
+# predictions = model.apply(np.concatenate([x for x, y in test_dset], axis=0))
+print(model.evaluate(np.concatenate([x for x, y in test_dset], axis=0), steps=test_dset.__len__().numpy(), batch_size=1))
 print(model.evaluate(np.concatenate([x for x, y in validation_dset], axis=0)))
 predictions_numeric = list()
 for p in predictions:
