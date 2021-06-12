@@ -1,4 +1,5 @@
-from os import path
+#from os import putenv
+#putenv("TF_CPP_MIN_LOG_LEVEL", "2")
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -6,57 +7,31 @@ from tensorflow.keras.layers.experimental import preprocessing
 from settings import *
 from data_processing import *
 from models import make_model
+from data_reading import read
 
-model_name = "convoulutional1"
 
-MODELS = ["test", "recurrent1", "recurrent2", "convoulutional1", "conv_zporadnika", "PRCNN", "BBNN"]
+#putenv("TF_CPP_MIN_LOG_LEVEL", "2")
+model_name = "recurrent2"
+
 EPOCHS = 20
-print('Wybierz model:')
-for i in range(len(MODELS)):
-    print(f'{i+1}. {MODELS[i]}')
-model_name = MODELS[int(input())-1]
+# MODELS = ["test", "recurrent1", "recurrent2", "convoulutional1", "conv_zporadnika", "PRCNN", "BBNN", "BBNN_simplified"]
+# print('Wybierz model:')
+# for i in range(len(MODELS)):
+#     print(f'{i+1}. {MODELS[i]}')
+# model_name = MODELS[int(input())-1]
 
+# split = 80  # % of data used for training (rest for validation)
 
-
-split = 80  # % of data used for training (rest for validation)
-filename = path.join(example_path, "all")
-raw_dataset = tf.data.TFRecordDataset(filename, num_parallel_reads=1)
-
-features = []
-labels = []
-lengths = []
-for r in raw_dataset:
-    rr = dset_parser(r)
-    features.append(rr[0])
-    labels.append(rr[1])
-    lengths.append(len(rr[0]))
-
-idxs = dict()
-for i in range(len(genres)):
-    idxs[genres[i]] = i
-# Wyłoży się jak będą różnej długości
-m = min(lengths)
-for i in range(len(features)):
-    if model_name == "recurrent1":  # In order to limit number of possible values for embedding
-        s = spectrogram(np.array(features[i][0:m]).astype(np.float32))
-        s = s / (2**5)
-        s = s.astype(np.uint16)
-    else:
-        if transpose:
-            s = np.transpose(spectrogram(np.array(features[i][0:m]).astype(np.float32)))
-        else:
-            s = spectrogram(np.array(features[i][0:m]).astype(np.float32))
-    features[i] = tf.constant(np.reshape(s, (1, *s.shape)))
-    labels[i] = tf.reshape(tf.constant(tf.one_hot(idxs[labels[i]], len(genres))), (1, len(genres)))
-
-dataset = tf.data.Dataset.from_tensor_slices((features, labels))
+dataset, _shape = read(model_name, 20)
 #dataset.map(lambda data, label: (spectrogram(data), label))  # Looks like shallow copy issues
 dataset = dataset.shuffle(min(len(dataset), 4000))
-n_split = np.ceil(len(dataset) * split / 100)
+n_split = np.ceil(len(dataset) * 0.7)  # 70% for training
 training_dset = dataset.take(n_split)
 validation_dset = dataset.skip(n_split)
+n_split = np.ceil(len(dataset) * 0.2)  # 20% for validation, 10% for testing
+test_dset = validation_dset.skip(n_split)
+validation_dset = validation_dset.take(n_split)
 
-_shape = features[0].shape[1:]
 training_dset.batch(BATCH_SIZE)
 validation_dset.batch(BATCH_SIZE)
 
@@ -66,7 +41,7 @@ lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
 )
 
 checkpoint_cb = tf.keras.callbacks.ModelCheckpoint(
-    f"{model_name}.h5", save_best_only=True
+    f"checkpoints/{model_name}.h5", save_best_only=True
 )
 
 early_stopping_cb = tf.keras.callbacks.EarlyStopping(
@@ -93,33 +68,31 @@ history = model.fit(
     callbacks=[checkpoint_cb, early_stopping_cb],
 )
 
-labels_original = np.concatenate([y for x, y in validation_dset], axis=0)
+labels_original = np.concatenate([y for x, y in test_dset], axis=0)
 labels_numeric = list()
 for l in labels_original:
     idx = np.where(l == 1)[0][0]
     labels_numeric.append(idx)
-# predictions = model.predict(np.concatenate([x for x, y in validation_dset], axis=0))
-predictions = model.evaluate(np.concatenate([x for x, y in validation_dset], axis=0))
+predictions = model.predict(np.concatenate([x for x, y in test_dset], axis=0))
+print(model.evaluate(np.concatenate([x for x, y in test_dset], axis=0)))
+print(model.evaluate(np.concatenate([x for x, y in validation_dset], axis=0)))
 predictions_numeric = list()
 for p in predictions:
-    idx = np.where(p == max(p))[0][0]
-    idy = np.argmax(p)
+    idx = np.argmax(p)
     predictions_numeric.append(idx)
-    #print(idx, idy, p)
-print(labels_numeric)
-print(predictions_numeric)
 counter = 0
 for i in range(len(labels_numeric)):
     if labels_numeric[i] == predictions_numeric[i]:
-        counter +=1
+        counter += 1
 print(counter/len(labels_numeric))
-
 
 cm = tf.math.confusion_matrix(labels_numeric, predictions_numeric)
 print(cm)
 print(genres)
 with open(f'confusion_matrixes/{model_name}_{counter/len(labels_numeric)}', 'w') as f:
     f.write(str(cm))
+
+con = tf.math.confusion_matrix(labels=labels_numeric, predictions=predictions_numeric )
 
 #https://towardsdatascience.com/a-practical-guide-to-tfrecords-584536bc786c
 exit(0)

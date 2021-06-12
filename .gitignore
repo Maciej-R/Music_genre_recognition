@@ -2,6 +2,6 @@ Data
 Data/*
 venv/*
 venv
-genres.h5
+checkpoints/genres.h5
 .vscode
 __pycache__
