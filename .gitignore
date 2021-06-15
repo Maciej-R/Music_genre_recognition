@@ -5,3 +5,4 @@ venv
 checkpoints/genres.h5
 .vscode
 __pycache__
+confusion_matrixes
