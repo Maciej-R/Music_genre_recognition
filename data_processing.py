@@ -29,8 +29,8 @@ def spectrogram(data):
     if normalize_spectrogram:
         s = np.std(spectrum)
         a = np.average(spectrum)
-        spectrum -= s
-        spectrum /= a
+        spectrum -= a
+        spectrum /= s
     return spectrum
 
 

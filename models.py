@@ -50,7 +50,7 @@ def make_model(shape, name):
         strides = 2
         p_size = 2
         return tf.keras.Sequential([
-            #tf.keras.layers.experimental.preprocessing.Normalization(),
+            tf.keras.layers.experimental.preprocessing.Normalization(),
             tf.keras.layers.Reshape((*shape, 1)),
             tf.keras.layers.MaxPooling2D((1, p_size), (1, strides)),
             tf.keras.layers.Reshape((shape[0], int(shape[1]/2))),
@@ -109,6 +109,7 @@ def make_model(shape, name):
         X = tf.keras.layers.Flatten()(X)
         X = tf.keras.layers.Dropout(rate=0.3)(X)
         X = tf.keras.layers.Dense(10, activation='softmax', name='fc' + str(10))(X)
+        X = tf.keras.layers.Softmax()(X)
 
         return tf.keras.models.Model(inputs=X_input, outputs=X)
 

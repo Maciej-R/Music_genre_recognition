@@ -10,9 +10,9 @@ from models import make_model
 from data_reading import read
 
 
-model_name = "conv_zporadnika"
+model_name = "convoulutional1"
 
-EPOCHS = 5
+EPOCHS = 15
 # MODELS = ["test", "recurrent1", "recurrent2", "convoulutional1", "conv_zporadnika", "PRCNN", "BBNN", "BBNN_simplified"]
 # print('Wybierz model:')
 # for i in range(len(MODELS)):
@@ -53,12 +53,11 @@ if learn:
 
     model = make_model(_shape, model_name)
 
-    #model.summary()
     #tf.keras.utils.plot_model(model, model_name+".png")  # Requires graphviz installed (in system)
 
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
-        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=False),
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
         metrics=[tf.keras.metrics.CategoricalAccuracy(), 'accuracy'],
         run_eagerly=True
     )
@@ -73,30 +72,65 @@ if learn:
 else:
     model = tf.keras.models.load_model(f"checkpoints/{model_name}.h5")
 
+
+model.evaluate(test_dset, steps=test_dset.__len__().numpy()/10, batch_size=10)
+
 labels_original = np.concatenate([y for x, y in test_dset], axis=0)
 labels_numeric = list()
 for l in labels_original:
     idx = np.where(l == 1)[0][0]
     labels_numeric.append(idx)
-predictions = model.predict(np.concatenate([x for x, y in test_dset], axis=0))
-# predictions = model.apply(np.concatenate([x for x, y in test_dset], axis=0))
-print(model.evaluate(np.concatenate([x for x, y in test_dset], axis=0), steps=test_dset.__len__().numpy(), batch_size=1))
-print(model.evaluate(np.concatenate([x for x, y in validation_dset], axis=0), steps=validation_dset.__len__().numpy(), batch_size=1))
+
+predictions = model.predict(np.concatenate([x for x, y in test_dset], axis=0), batch_size=BATCH_SIZE)
+
+
+import pdb
+pdb.set_trace()
+#predictions = model.apply(np.concatenate([x for x, y in test_dset], axis=0))
+#predictions = model(np.concatenate([x for x, y in test_dset], axis=0))
+#model.evaluate(np.concatenate([x for x, y in test_dset], axis=0), steps=test_dset.__len__().numpy()/10, batch_size=10)
+
+
+# model.evaluate(np.concatenate([x for x, y in validation_dset], axis=0), steps=validation_dset.__len__().numpy()/10, batch_size=10)
+
 predictions_numeric = list()
 for p in predictions:
     idx = np.argmax(p)
     predictions_numeric.append(idx)
 counter = 0
+
 for i in range(len(labels_numeric)):
     if labels_numeric[i] == predictions_numeric[i]:
         counter += 1
+
 print(counter/len(labels_numeric))
 
-cm = tf.math.confusion_matrix(labels_numeric, predictions_numeric)
+pdb.set_trace()
+
+cm = tf.math.confusion_matrix(labels_numeric, labels_numeric)
+
+pdb.set_trace()
+
 print(cm)
 print(genres)
+
+
 with open(f'confusion_matrixes/{model_name}_{counter/len(labels_numeric)}', 'w') as f:
     f.write(str(cm))
+
+
+# print(tf.keras.metrics.binary_accuracy(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.categorical_accuracy(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.top_k_categorical_accuracy(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.mean_squared_error(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.mean_absolute_error(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.mean_squared_logarithmic_error(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.hinge(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.squared_hinge(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.categorical_crossentropy(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.binary_crossentropy(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.kullback_leibler_divergence(labels_numeric, predictions_numeric))
+# print(tf.keras.metrics.poisson(labels_numeric, predictions_numeric))
 
 con = tf.math.confusion_matrix(labels=labels_numeric, predictions=predictions_numeric )
 
