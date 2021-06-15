@@ -2,6 +2,7 @@ Data
 Data/*
 venv/*
 venv
-genres.h5
+*.h5
 .vscode
 __pycache__
+confusion_matrixes
