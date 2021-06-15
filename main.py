@@ -10,7 +10,7 @@ from models import make_model
 from data_reading import read
 
 
-model_name = "convoulutional1"
+model_name = "conv_zporadnika"
 
 EPOCHS = 15
 # MODELS = ["test", "recurrent1", "recurrent2", "convoulutional1", "conv_zporadnika", "PRCNN", "BBNN", "BBNN_simplified"]
@@ -53,12 +53,12 @@ if learn:
 
     model = make_model(_shape, model_name)
 
-    #tf.keras.utils.plot_model(model, model_name+".png")  # Requires graphviz installed (in system)
+    tf.keras.utils.plot_model(model, model_name+".png")  # Requires graphviz installed (in system)
 
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
-        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
-        metrics=[tf.keras.metrics.CategoricalAccuracy(), 'accuracy'],
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=False),
+        metrics=[tf.keras.metrics.CategoricalAccuracy()],
         run_eagerly=True
     )
 
