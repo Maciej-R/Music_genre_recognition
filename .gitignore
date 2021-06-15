@@ -2,7 +2,7 @@ Data
 Data/*
 venv/*
 venv
-*.h5
+checkpoints/genres.h5
 .vscode
 __pycache__
 confusion_matrixes

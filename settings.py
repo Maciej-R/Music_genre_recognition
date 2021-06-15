@@ -12,8 +12,9 @@ use_mel_scale = 1  # Converting spectrogram to mel scale, default should be 1
 s_power = 1  # 1 for energy, 2 for power [output data = FFT(music)^s_power]
 transpose = 0
 # Paths
-data_path = "C:\\Users\\MrThe\\Music_genre_recognition\\Data"
+data_path = "D:\\Data\\archive\\Data"
 music_path = data_path + "\\genres_original"
 example_path = data_path + "\\examples"
+read_serialized = True
 
 BATCH_SIZE = 10

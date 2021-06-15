@@ -25,6 +25,7 @@ def make_model(shape, name):
             tf.keras.layers.Dense(20, activation='relu'),
             tf.keras.layers.Dropout(0.5),
             tf.keras.layers.Dense(10),
+            tf.keras.layers.Softmax()
         ])
 
     if (name == "recurrent1"):
@@ -42,6 +43,7 @@ def make_model(shape, name):
             tf.keras.layers.Reshape((shape[0], int(reshape * e_len / shape[0]))),
             tf.keras.layers.Bidirectional(tf.keras.layers.GRU(256)),
             tf.keras.layers.Dense(10),
+            tf.keras.layers.Softmax()
         ])
 
     if (name == "recurrent2"):
@@ -53,6 +55,7 @@ def make_model(shape, name):
             tf.keras.layers.Reshape((shape[0], int(shape[1]/2))),
             tf.keras.layers.Bidirectional(tf.keras.layers.GRU(256)),
             tf.keras.layers.Dense(10),
+            tf.keras.layers.Softmax()
         ])
 
     if (name == "convoulutional1"):
@@ -116,7 +119,7 @@ def make_model(shape, name):
         r = tf.keras.layers.MaxPooling2D((1, 2), (1, 2))(inn)
         r = tf.keras.layers.Reshape((shape[0], int(shape[1] / 2)))(r)  # MaxPooling drops half
         r = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(256))(r)
-        r = tf.keras.layers.Dense(5, activation="softmax")(r)
+        #r = tf.keras.layers.Dense(5, activation="softmax")(r)
 
         n_filters = 16
         c = tf.keras.layers.Conv2D(n_filters, 3)(inn)
@@ -130,10 +133,11 @@ def make_model(shape, name):
         c = tf.keras.layers.Conv2D(n_filters * 4, 3)(c)
         c = tf.keras.layers.MaxPooling2D((4, 4), (4, 4))(c)
         c = tf.keras.layers.Flatten()(c)
-        c = tf.keras.layers.Dense(5, activation="softmax")(c)
+        #c = tf.keras.layers.Dense(5, activation="softmax")(c)
 
-        out = tf.keras.layers.Concatenate()([r, c])
-        # out = tf.keras.layers.Dense(10, activation="softmax")(out)
+        out = tf.keras.layers.Concatenate(axis=1)([r, c])
+        out = tf.keras.layers.Dense(10, activation=None)(out)
+        out = tf.keras.layers.Softmax()(out)
 
         return tf.keras.models.Model(inputs=input, outputs=out)
 
@@ -143,32 +147,38 @@ def make_model(shape, name):
     # IEEE conference on computer vision and pattern recognition - można sprawdzić na temat jądra dla warstw splotowych
     # https://machinelearningmastery.com/convolutional-layers-for-deep-learning-neural-networks/
     if (name == "BBNN"):
+
         kernel_size = 3
-        input = tf.keras.layers.Input(shape)
-        i = tf.keras.layers.Reshape((*shape, 1))(input)
-        c1 = tf.keras.layers.Conv2D(filters=32, kernel_size=kernel_size, strides=(1,1))(i)
-        bn = tf.keras.layers.BatchNormalization()(c1)
-        mp = tf.keras.layers.MaxPooling2D((4,1))(bn)
+        input, mp = BBNN_initial_layers(shape, kernel_size)
 
         shape = int(shape[0]/4), shape[1]
         inception_a = inception(shape, kernel_size, mp)
-        connector1 = tf.keras.layers.Concatenate()([inception_a, mp])
+        connector1 = tf.keras.layers.Concatenate(axis=3)([inception_a, mp])
 
         inception_b = inception(shape, kernel_size, connector1)
-        connector2 = tf.keras.layers.Concatenate()([connector1, inception_b])
+        connector2 = tf.keras.layers.Concatenate(axis=3)([connector1, inception_b])
 
         inception_c = inception(shape, kernel_size, connector2)
-        connector3 = tf.keras.layers.Concatenate()([connector2, inception_c])
+        connector3 = tf.keras.layers.Concatenate(axis=3)([connector2, inception_c])
 
-        out = tf.keras.layers.BatchNormalization()(connector3)
-        out = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1,1))(out)
-        out = tf.keras.layers.AveragePooling2D(pool_size=(2,2), strides=(2,2))(out)
-        out = tf.keras.layers.BatchNormalization()(out)
-        out = tf.keras.layers.GlobalAveragePooling2D()(out)
-        out = tf.keras.layers.Dense(10, activation="softmax")(out)
-        out = tf.keras.layers.Softmax()(out)
+        out = BBNN_final_layers(connector3)
 
         return tf.keras.models.Model(inputs=input, outputs=out)
+
+    if (name == "BBNN_simplified"):
+
+        kernel_size = 3
+
+        input, mp = BBNN_initial_layers(shape, kernel_size)
+
+        shape = int(shape[0]/4), shape[1]
+        inception_a = inception(shape, kernel_size, mp)
+        #connector1 = tf.keras.layers.Concatenate(axis=3)([inception_a, mp])
+
+        out = BBNN_final_layers(inception_a)
+
+        return tf.keras.models.Model(inputs=input, outputs=out)
+
 
 
 def inception(shape, kernel_size, _input):
@@ -193,3 +203,24 @@ def inception(shape, kernel_size, _input):
     _4 = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1), padding="same")(_4)
 
     return tf.keras.layers.Concatenate(axis=-1)([_1, _2, _3, _4])
+
+
+def BBNN_final_layers(_input):
+
+    #out = tf.keras.layers.BatchNormalization()(_input)
+    out = tf.keras.layers.Conv2D(filters=32, kernel_size=1, strides=(1, 1))(_input)
+    out = tf.keras.layers.AveragePooling2D(pool_size=(2, 2), strides=(2, 2))(out)
+    #out = tf.keras.layers.BatchNormalization()(out)
+    #out = tf.keras.layers.GlobalAveragePooling2D()(out)
+    out = tf.keras.layers.Flatten()(out)
+    out = tf.keras.layers.Dense(10)(out)
+    return tf.keras.layers.Softmax()(out)
+
+
+def BBNN_initial_layers(shape, kernel_size):
+
+    input = tf.keras.layers.Input(shape)
+    i = tf.keras.layers.Reshape((*shape, 1))(input)
+    c1 = tf.keras.layers.Conv2D(filters=32, kernel_size=kernel_size, strides=(1, 1))(i)
+    bn = tf.keras.layers.BatchNormalization()(c1)
+    return input, tf.keras.layers.MaxPooling2D((4, 1))(bn)
