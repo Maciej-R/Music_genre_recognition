@@ -26,6 +26,11 @@ def spectrogram(data):
         spectrum = 10 * np.log10(spectrum)
     if use_mel_scale:  # Mel scale
         spectrum = filt.dot(spectrum)
+    if normalize_spectrogram:
+        s = np.std(spectrum)
+        a = np.average(spectrum)
+        spectrum -= s
+        spectrum /= a
     return spectrum
 
 

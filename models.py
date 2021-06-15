@@ -50,6 +50,7 @@ def make_model(shape, name):
         strides = 2
         p_size = 2
         return tf.keras.Sequential([
+            #tf.keras.layers.experimental.preprocessing.Normalization(),
             tf.keras.layers.Reshape((*shape, 1)),
             tf.keras.layers.MaxPooling2D((1, p_size), (1, strides)),
             tf.keras.layers.Reshape((shape[0], int(shape[1]/2))),
@@ -76,41 +77,40 @@ def make_model(shape, name):
         ])
 
     if (name =="conv_zporadnika"):
+
         X_input = tf.keras.layers.Input(shape)
+        X = tf.keras.layers.Reshape((*shape, 1))(X_input)
 
-        X = tf.keras.layers.Conv2D(8,kernel_size=(3,3),strides=(1,1))(X_input)
+        X = tf.keras.layers.Conv2D(8, kernel_size=(3, 3), strides=(1, 1))(X)
         X = tf.keras.layers.BatchNormalization(axis=3)(X)
         X = tf.keras.layers.Activation('relu')(X)
-        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+        X = tf.keras.layers.MaxPooling2D((2, 2))(X)
         
-        X = tf.keras.layers.Conv2D(16,kernel_size=(3,3),strides = (1,1))(X)
+        X = tf.keras.layers.Conv2D(16, kernel_size=(3, 3), strides=(1, 1))(X)
         X = tf.keras.layers.BatchNormalization(axis=3)(X)
         X = tf.keras.layers.Activation('relu')(X)
-        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+        X = tf.keras.layers.MaxPooling2D((2, 2))(X)
         
-        X = tf.keras.layers.Conv2D(32,kernel_size=(3,3),strides = (1,1))(X)
+        X = tf.keras.layers.Conv2D(32, kernel_size=(3, 3), strides=(1, 1))(X)
         X = tf.keras.layers.BatchNormalization(axis=3)(X)
         X = tf.keras.layers.Activation('relu')(X)
-        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+        X = tf.keras.layers.MaxPooling2D((2, 2))(X)
 
-        X = tf.keras.layers.Conv2D(64,kernel_size=(3,3),strides=(1,1))(X)
+        X = tf.keras.layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1))(X)
         X = tf.keras.layers.BatchNormalization(axis=-1)(X)
         X = tf.keras.layers.Activation('relu')(X)
-        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+        X = tf.keras.layers.MaxPooling2D((2, 2))(X)
         
-        X = tf.keras.layers.Conv2D(128,kernel_size=(3,3),strides=(1,1))(X)
+        X = tf.keras.layers.Conv2D(128, kernel_size=(3, 3), strides=(1, 1))(X)
         X = tf.keras.layers.BatchNormalization(axis=-1)(X)
         X = tf.keras.layers.Activation('relu')(X)
-        X = tf.keras.layers.MaxPooling2D((2,2))(X)
+        X = tf.keras.layers.MaxPooling2D((2, 2))(X)
 
-        
         X = tf.keras.layers.Flatten()(X)
-        
-        X = tf.keras.layers.Dropout(rate=0.3)
-
+        X = tf.keras.layers.Dropout(rate=0.3)(X)
         X = tf.keras.layers.Dense(10, activation='softmax', name='fc' + str(10))(X)
 
-        return tf.keras.layers.Model(inputs=X_input,outputs=X,name='GenreModel')
+        return tf.keras.models.Model(inputs=X_input, outputs=X)
 
     if (name == "PRCNN"):
         input = tf.keras.layers.Input(shape)
@@ -173,9 +173,9 @@ def make_model(shape, name):
 
         shape = int(shape[0]/4), shape[1]
         inception_a = inception(shape, kernel_size, mp)
-        #connector1 = tf.keras.layers.Concatenate(axis=3)([inception_a, mp])
+        connector1 = tf.keras.layers.Concatenate(axis=3)([inception_a, mp])
 
-        out = BBNN_final_layers(inception_a)
+        out = BBNN_final_layers(connector1)
 
         return tf.keras.models.Model(inputs=input, outputs=out)
 

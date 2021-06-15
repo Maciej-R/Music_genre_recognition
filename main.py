@@ -10,9 +10,9 @@ from models import make_model
 from data_reading import read
 
 
-model_name = "recurrent2"
+model_name = "conv_zporadnika"
 
-EPOCHS = 10
+EPOCHS = 5
 # MODELS = ["test", "recurrent1", "recurrent2", "convoulutional1", "conv_zporadnika", "PRCNN", "BBNN", "BBNN_simplified"]
 # print('Wybierz model:')
 # for i in range(len(MODELS)):
@@ -33,6 +33,7 @@ validation_dset = validation_dset.take(n_split)
 
 training_dset.batch(BATCH_SIZE)
 validation_dset.batch(BATCH_SIZE)
+test_dset.batch(BATCH_SIZE)
 
 learn = True
 if learn:
@@ -80,7 +81,7 @@ for l in labels_original:
 predictions = model.predict(np.concatenate([x for x, y in test_dset], axis=0))
 # predictions = model.apply(np.concatenate([x for x, y in test_dset], axis=0))
 print(model.evaluate(np.concatenate([x for x, y in test_dset], axis=0), steps=test_dset.__len__().numpy(), batch_size=1))
-print(model.evaluate(np.concatenate([x for x, y in validation_dset], axis=0)))
+print(model.evaluate(np.concatenate([x for x, y in validation_dset], axis=0), steps=validation_dset.__len__().numpy(), batch_size=1))
 predictions_numeric = list()
 for p in predictions:
     idx = np.argmax(p)

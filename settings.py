@@ -15,6 +15,7 @@ transpose = 0
 data_path = "D:\\Data\\archive\\Data"
 music_path = data_path + "\\genres_original"
 example_path = data_path + "\\examples"
-read_serialized = True
+read_serialized = False
+normalize_spectrogram = True
 
 BATCH_SIZE = 10
